@@ -300,6 +300,58 @@ function exportExcel() {
       processedData.push(currentRow);
     }
 
+    const gioLuongIndex = filteredHeaders.indexOf("Giờ lương");
+
+    if (gioLuongIndex !== -1) {
+      const sumStartRow = 2;
+      const sumEndRow = processedData.length + 1;
+      const colLetter = XLSX.utils.encode_col(gioLuongIndex);
+
+      // Row: Tổng giờ lương
+      const sumRow = Array(filteredHeaders.length).fill("");
+      sumRow[gioLuongIndex - 1] = "Tổng giờ lương";
+      sumRow[gioLuongIndex] = {
+        f: `SUM(${colLetter}${sumStartRow}:${colLetter}${sumEndRow})`,
+      };
+      processedData.push(sumRow);
+
+      // Row: Lương mỗi giờ
+      const luongMoiGioRow = Array(filteredHeaders.length).fill("");
+      luongMoiGioRow[gioLuongIndex - 1] = "Lương mỗi giờ";
+      luongMoiGioRow[gioLuongIndex] = 15000;
+      processedData.push(luongMoiGioRow);
+
+      // Row: Tổng lương
+      const tongLuongRow = Array(filteredHeaders.length).fill("");
+      tongLuongRow[gioLuongIndex - 1] = "Tổng lương";
+
+      const tongGioExcelRow = processedData.length - 1 + 1; // "Tổng giờ lương" Excel row
+      const rateExcelRow = processedData.length + 1; // "Lương mỗi giờ" Excel row
+
+      tongLuongRow[gioLuongIndex] = {
+        f: `${colLetter}${tongGioExcelRow}*${colLetter}${rateExcelRow}`,
+      };
+      processedData.push(tongLuongRow);
+
+      // Row: Tạm ứng
+      const tamUngRow = Array(filteredHeaders.length).fill("");
+      tamUngRow[gioLuongIndex - 1] = "Tạm ứng";
+      tamUngRow[gioLuongIndex] = 0;
+      processedData.push(tamUngRow);
+
+      // Row: Thực lãnh = Tổng lương - Tạm ứng
+      const thucLanhRow = Array(filteredHeaders.length).fill("");
+      thucLanhRow[gioLuongIndex - 1] = "Thực lãnh";
+
+      const tongLuongExcelRow = processedData.length; // just pushed "Tạm ứng"
+      const tamUngExcelRow = processedData.length + 1;
+
+      thucLanhRow[gioLuongIndex] = {
+        f: `${colLetter}${tongLuongExcelRow} - ${colLetter}${tamUngExcelRow}`,
+      };
+      processedData.push(thucLanhRow);
+    }
+
     // Combine filtered headers and processed data
     const sheetData = [filteredHeaders, ...processedData];
     const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
@@ -313,25 +365,16 @@ function exportExcel() {
       { wch: 15 }, // Giờ lương
     ];
 
-    // Apply styles to headers (only bold text, no background color)
-    const headerStyle = {
-      font: { bold: true, color: { rgb: "000000" } }, // Black bold text
-    };
-
     // Apply styles to header cells
     filteredHeaders.forEach((header, colIndex) => {
-      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: colIndex });
-      worksheet[cellAddress].s = headerStyle;
-
-      // Format the "Giờ lương" column as a number with one decimal place
+      // Optional: Format "Giờ lương" column numbers
       if (header === "Giờ lương") {
         for (let rowIndex = 1; rowIndex <= processedData.length; rowIndex++) {
           const cell =
             worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: colIndex })];
           if (cell && !isNaN(cell.v)) {
-            // Check if the cell contains a valid number
-            cell.t = "n"; // Set type to number
-            cell.z = "0.0"; // Set number format to one decimal place
+            cell.t = "n";
+            cell.z = "0.0";
           }
         }
       }
