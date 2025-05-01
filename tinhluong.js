@@ -163,15 +163,17 @@ function exportExcel() {
   const nameMapping = new Map(); // Map lowercase name to original name
 
   tableData.forEach((row) => {
-    const originalName = row[nameIndex];
-    const lowerCaseName = originalName.toLowerCase();
-
-    if (!groupedData[lowerCaseName]) {
-      groupedData[lowerCaseName] = [];
-      nameMapping.set(lowerCaseName, originalName); // Store the original name
+    if (row?.length) {
+      const originalName = row[nameIndex];
+      const lowerCaseName = originalName.toLowerCase();
+  
+      if (!groupedData[lowerCaseName]) {
+        groupedData[lowerCaseName] = [];
+        nameMapping.set(lowerCaseName, originalName); // Store the original name
+      }
+  
+      groupedData[lowerCaseName].push(row); // Add the row to the employee's array
     }
-
-    groupedData[lowerCaseName].push(row); // Add the row to the employee's array
   });
 
   // Define the desired columns to include in the export
