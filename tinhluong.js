@@ -166,12 +166,12 @@ function exportExcel() {
     if (row?.length) {
       const originalName = row[nameIndex];
       const lowerCaseName = originalName.toLowerCase();
-  
+
       if (!groupedData[lowerCaseName]) {
         groupedData[lowerCaseName] = [];
         nameMapping.set(lowerCaseName, originalName); // Store the original name
       }
-  
+
       groupedData[lowerCaseName].push(row); // Add the row to the employee's array
     }
   });
@@ -327,30 +327,40 @@ function exportExcel() {
       const tongLuongRow = Array(filteredHeaders.length).fill("");
       tongLuongRow[gioLuongIndex - 1] = "Tổng lương";
 
-      const tongGioExcelRow = processedData.length - 1 + 1; // "Tổng giờ lương" Excel row
+      const tongGioExcelRow = processedData.length; // "Tổng giờ lương" Excel row
       const rateExcelRow = processedData.length + 1; // "Lương mỗi giờ" Excel row
 
       tongLuongRow[gioLuongIndex] = {
         f: `${colLetter}${tongGioExcelRow}*${colLetter}${rateExcelRow}`,
       };
       processedData.push(tongLuongRow);
+      const tongLuongExcelRow = processedData.length + 1;
 
-      // Row: Tạm ứng
-      const tamUngRow = Array(filteredHeaders.length).fill("");
-      tamUngRow[gioLuongIndex - 1] = "Tạm ứng";
-      tamUngRow[gioLuongIndex] = 0;
-      processedData.push(tamUngRow);
+      // === Multiple "Tạm ứng" rows (dynamic) ===
+      const numTamUng = 5;
+      const tamUngRefs = []; 
 
-      // Row: Thực lãnh = Tổng lương - Tạm ứng
+      for (let i = 1; i <= numTamUng; i++) {
+        const tamUngRow = Array(filteredHeaders.length).fill("");
+        tamUngRow[gioLuongIndex - 1] = `Tạm ứng ${i}`;
+        tamUngRow[gioLuongIndex] = 0;
+        processedData.push(tamUngRow);
+
+        // Excel row number of the row we just pushed:
+        const excelRow = processedData.length + 1; // +1 because header occupies row 1
+        tamUngRefs.push(`${colLetter}${excelRow}`);
+      }
+
+      // === Thực lãnh row ===
       const thucLanhRow = Array(filteredHeaders.length).fill("");
       thucLanhRow[gioLuongIndex - 1] = "Thực lãnh";
 
-      const tongLuongExcelRow = processedData.length; // just pushed "Tạm ứng"
-      const tamUngExcelRow = processedData.length + 1;
-
+      // Build formula: = Tổng_lương - (Tạm ứng 1 + Tạm ứng 2 + ...)
+      const tamUngSumExpr = tamUngRefs.join(" + ");
       thucLanhRow[gioLuongIndex] = {
-        f: `${colLetter}${tongLuongExcelRow} - ${colLetter}${tamUngExcelRow}`,
+        f: `${colLetter}${tongLuongExcelRow} - (${tamUngSumExpr})`,
       };
+
       processedData.push(thucLanhRow);
     }
 
