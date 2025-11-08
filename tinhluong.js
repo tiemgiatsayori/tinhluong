@@ -338,7 +338,7 @@ function exportExcel() {
 
       // === Multiple "Tạm ứng" rows (dynamic) ===
       const numTamUng = 5;
-      const tamUngRefs = []; 
+      const tamUngRefs = [];
 
       for (let i = 1; i <= numTamUng; i++) {
         const tamUngRow = Array(filteredHeaders.length).fill("");
@@ -351,14 +351,15 @@ function exportExcel() {
         tamUngRefs.push(`${colLetter}${excelRow}`);
       }
 
-      // === Thực lãnh row ===
+      // === Thực lãnh row (using SUM) ===
       const thucLanhRow = Array(filteredHeaders.length).fill("");
       thucLanhRow[gioLuongIndex - 1] = "Thực lãnh";
 
-      // Build formula: = Tổng_lương - (Tạm ứng 1 + Tạm ứng 2 + ...)
-      const tamUngSumExpr = tamUngRefs.join(" + ");
+      // Build Excel formula: =Tổng_lương - SUM(firstTamUng:lastTamUng)
+      const firstRef = tamUngRefs[0];
+      const lastRef = tamUngRefs[tamUngRefs.length - 1];
       thucLanhRow[gioLuongIndex] = {
-        f: `${colLetter}${tongLuongExcelRow} - (${tamUngSumExpr})`,
+        f: `${colLetter}${tongLuongExcelRow} - SUM(${firstRef}:${lastRef})`,
       };
 
       processedData.push(thucLanhRow);
